@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// In Prisma 7, the datasource URL is set via prisma.config.ts — no url field here
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum AuditAction {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         Role
+  active       Boolean  @default(true)
+  departmentId String?  @map("department_id")
+  managerId    String?  @map("manager_id")
+  contactEmail String?  @map("contact_email")
+  phone        String?
+  photoPath    String?  @map("photo_path")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  department    Department?    @relation("DeptEmployees", fields: [departmentId], references: [id])
+  manager       User?          @relation("Reports", fields: [managerId], references: [id])
+  directReports User[]         @relation("Reports")
+  managedDept   Department?    @relation("DeptManager")
+  leaveBalances LeaveBalance[]
+  leaveRequests LeaveRequest[]
+  notifications Notification[]
+  refreshTokens RefreshToken[]
+  auditActions  AuditLog[]
+
+  @@map("users")
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  managerId String?  @unique @map("manager_id")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  manager   User?  @relation("DeptManager", fields: [managerId], references: [id])
+  employees User[] @relation("DeptEmployees")
+
+  @@map("departments")
+}
+
+model LeaveType {
+  id               String   @id @default(uuid())
+  name             String   @unique
+  defaultQuota     Int      @map("default_quota")
+  documentRequired Boolean  @default(false) @map("document_required")
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  leaveBalances LeaveBalance[]
+  leaveRequests LeaveRequest[]
+
+  @@map("leave_types")
+}
+
+model LeaveBalance {
+  id          String @id @default(uuid())
+  userId      String @map("user_id")
+  leaveTypeId String @map("leave_type_id")
+  balance     Int
+
+  user      User      @relation(fields: [userId], references: [id])
+  leaveType LeaveType @relation(fields: [leaveTypeId], references: [id])
+
+  @@unique([userId, leaveTypeId])
+  @@map("leave_balances")
+}
+
+model LeaveRequest {
+  id           String      @id @default(uuid())
+  userId       String      @map("user_id")
+  leaveTypeId  String      @map("leave_type_id")
+  startDate    DateTime    @map("start_date") @db.Date
+  endDate      DateTime    @map("end_date") @db.Date
+  durationDays Int         @map("duration_days")
+  status       LeaveStatus @default(PENDING)
+  reason       String
+  documentPath String?     @map("document_path")
+  comment      String?
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id])
+  leaveType LeaveType  @relation(fields: [leaveTypeId], references: [id])
+  auditLogs AuditLog[]
+
+  @@map("leave_requests")
+}
+
+model AuditLog {
+  id             String      @id @default(uuid())
+  leaveRequestId String      @map("leave_request_id")
+  actorId        String      @map("actor_id")
+  action         AuditAction
+  comment        String?
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  leaveRequest LeaveRequest @relation(fields: [leaveRequestId], references: [id])
+  actor        User         @relation(fields: [actorId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model CompanyHoliday {
+  id        String   @id @default(uuid())
+  date      DateTime @unique @db.Date
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("company_holidays")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}

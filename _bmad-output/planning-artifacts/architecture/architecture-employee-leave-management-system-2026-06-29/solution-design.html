@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Leave Management System — Solution Design</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #6c7ef7;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #8892b0;
+      --green: #4ade80;
+      --yellow: #facc15;
+      --red: #f87171;
+      --orange: #fb923c;
+      --teal: #34d399;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Layout ── */
+    .page { max-width: 960px; margin: 0 auto; padding: 48px 24px 96px; }
+    section { margin-top: 56px; }
+
+    /* ── Typography ── */
+    h1 { font-size: 2.2rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+    h2 { font-size: 1.35rem; font-weight: 600; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 20px; }
+    h3 { font-size: 1.05rem; font-weight: 600; color: #c9d1e0; margin-bottom: 10px; margin-top: 24px; }
+    p { color: var(--text); margin-bottom: 12px; }
+    .muted { color: var(--muted); font-size: 0.88rem; }
+    code {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.85em;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      color: var(--accent2);
+    }
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      font-size: 0.84em;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      color: #cdd6f4;
+      line-height: 1.55;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1d27 0%, #12152a 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 48px;
+      margin-bottom: 16px;
+    }
+    .hero-sub { color: var(--muted); margin-top: 8px; font-size: 1rem; }
+    .hero-meta { margin-top: 20px; display: flex; gap: 24px; flex-wrap: wrap; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 12px;
+      font-size: 0.82rem; color: var(--muted);
+    }
+    .badge .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .dot-green { background: var(--green); }
+    .dot-blue { background: var(--accent); }
+    .dot-purple { background: var(--accent2); }
+
+    /* ── Cards ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+    .card-label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .card-value { font-size: 1.15rem; font-weight: 600; color: #fff; }
+
+    /* ── AD blocks ── */
+    .ad-grid { display: flex; flex-direction: column; gap: 14px; }
+    .ad {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 14px 18px;
+    }
+    .ad-id { font-size: 0.75rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+    .ad-title { font-weight: 600; color: #fff; margin-bottom: 6px; font-size: 0.97rem; }
+    .ad-meta { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+    .ad-tag { font-size: 0.78rem; color: var(--muted); }
+    .ad-tag span { color: var(--text); }
+    .ad-rule { font-size: 0.88rem; color: var(--muted); margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+    .ad-adopted { border-left-color: var(--green); }
+    .ad-adopted .ad-id { color: var(--green); }
+
+    /* ── Tables ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th {
+      text-align: left; padding: 10px 14px;
+      background: var(--surface2); color: var(--muted);
+      font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(108,126,247,0.04); }
+    .pill {
+      display: inline-block; border-radius: 4px;
+      padding: 2px 8px; font-size: 0.78rem; font-weight: 600;
+    }
+    .pill-green { background: rgba(74,222,128,0.12); color: var(--green); }
+    .pill-yellow { background: rgba(250,204,21,0.12); color: var(--yellow); }
+    .pill-red { background: rgba(248,113,113,0.12); color: var(--red); }
+    .pill-blue { background: rgba(108,126,247,0.12); color: var(--accent); }
+    .pill-purple { background: rgba(167,139,250,0.12); color: var(--accent2); }
+    .pill-orange { background: rgba(251,146,60,0.12); color: var(--orange); }
+
+    /* ── Diagram boxes ── */
+    .diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      overflow-x: auto;
+    }
+    .flow {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 0;
+      font-size: 0.88rem;
+    }
+    .flow-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 14px;
+      white-space: nowrap;
+      font-family: monospace;
+    }
+    .flow-arrow { color: var(--muted); padding: 0 10px; font-size: 1.1rem; }
+    .flow-note { font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+
+    .arch-layers {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .layer {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 16px;
+    }
+    .layer-label { font-size: 0.78rem; color: var(--muted); width: 90px; flex-shrink: 0; }
+    .layer-content { display: flex; gap: 8px; flex-wrap: wrap; }
+    .layer-chip {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 4px; padding: 3px 10px; font-size: 0.82rem;
+      font-family: monospace; color: var(--accent2);
+    }
+    .layer-arrow { color: var(--muted); text-align: center; font-size: 1rem; padding: 0 0 0 44px; }
+
+    /* ── Entity diagram ── */
+    .entity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .entity-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .entity-name {
+      background: var(--surface2);
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: monospace;
+      border-bottom: 1px solid var(--border);
+    }
+    .entity-fields { padding: 8px 12px; }
+    .entity-field {
+      font-size: 0.78rem;
+      font-family: monospace;
+      color: var(--muted);
+      padding: 2px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .entity-field .fk { color: var(--orange); }
+    .entity-field .pk { color: var(--yellow); }
+
+    /* ── Security callouts ── */
+    .callout {
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+    }
+    .callout-warn { background: rgba(250,204,21,0.07); border: 1px solid rgba(250,204,21,0.2); }
+    .callout-info { background: rgba(108,126,247,0.07); border: 1px solid rgba(108,126,247,0.2); }
+    .callout-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+    /* ── Timeline / sequence ── */
+    .timeline { display: flex; flex-direction: column; gap: 0; }
+    .tl-step {
+      display: flex; gap: 16px;
+    }
+    .tl-left {
+      display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 28px;
+    }
+    .tl-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent); margin-top: 5px; flex-shrink: 0;
+    }
+    .tl-line { width: 2px; background: var(--border); flex-grow: 1; margin-top: 4px; }
+    .tl-content { padding-bottom: 20px; }
+    .tl-title { font-weight: 600; color: #fff; font-size: 0.93rem; margin-bottom: 3px; }
+    .tl-desc { font-size: 0.85rem; color: var(--muted); }
+    .tl-step:last-child .tl-line { display: none; }
+
+    /* ── Deferred ── */
+    .deferred-list { display: flex; flex-direction: column; gap: 10px; }
+    .deferred-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      border-radius: 0 8px 8px 0;
+      padding: 10px 16px;
+      font-size: 0.88rem;
+    }
+    .deferred-item strong { color: var(--muted); }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; gap: 0; overflow-x: auto;
+    }
+    nav a {
+      color: var(--muted); padding: 12px 16px;
+      font-size: 0.84rem; white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s;
+    }
+    nav a:hover { color: var(--text); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="#overview">Overview</a>
+    <a href="#paradigm">Paradigm</a>
+    <a href="#invariants">Invariants</a>
+    <a href="#entities">Data Model</a>
+    <a href="#security">Security</a>
+    <a href="#lifecycle">Leave Lifecycle</a>
+    <a href="#deployment">Deployment</a>
+    <a href="#stack">Stack</a>
+    <a href="#deferred">Deferred</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ── Hero ── -->
+  <div class="hero" id="overview">
+    <h1>Employee Leave Management System</h1>
+    <p class="hero-sub">Solution Design — Architecture Spine companion</p>
+    <div class="hero-meta">
+      <span class="badge"><span class="dot dot-green"></span>Portfolio project</span>
+      <span class="badge"><span class="dot dot-blue"></span>Layered REST API + Feature-Slice SPA</span>
+      <span class="badge"><span class="dot dot-purple"></span>16 Architecture Decisions</span>
+      <span class="badge">2026-06-29</span>
+    </div>
+  </div>
+
+  <p>A web-based system that lets employees apply for leave, managers approve team requests, and admins configure the full workforce. Three role-based dashboards. Demo-ready with seeded accounts for zero-friction portfolio review.</p>
+
+  <div class="card-grid" style="margin-top:24px">
+    <div class="card">
+      <div class="card-label">Roles</div>
+      <div class="card-value">3</div>
+      <p class="muted" style="margin-top:6px">Admin · Manager · Employee</p>
+    </div>
+    <div class="card">
+      <div class="card-label">Architecture Decisions</div>
+      <div class="card-value">AD-1 → AD-16</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Backend</div>
+      <div class="card-value">Node 24 + Express 5</div>
+      <p class="muted" style="margin-top:6px">Prisma 7 · PostgreSQL 16</p>
+    </div>
+    <div class="card">
+      <div class="card-label">Frontend</div>
+      <div class="card-value">React 18 + Tailwind 4</div>
+      <p class="muted" style="margin-top:6px">TanStack Query 5 · RR v7</p>
+    </div>
+  </div>
+
+
+  <!-- ── Paradigm ── -->
+  <section id="paradigm">
+    <h2>Design Paradigm</h2>
+    <p><strong>Layered REST API + Feature-Slice SPA.</strong> The backend is a strict top-down layered system. The frontend is organized into independent vertical feature slices sharing a thin common library. All cross-boundary communication is REST — the two halves are separately deployable from day one.</p>
+
+    <h3>Backend layers</h3>
+    <div class="diagram">
+      <div class="arch-layers">
+        <div class="layer">
+          <span class="layer-label">Routes</span>
+          <div class="layer-content">
+            <span class="layer-chip">routes/auth.ts</span>
+            <span class="layer-chip">routes/leaveRequests.ts</span>
+            <span class="layer-chip">routes/employees.ts</span>
+            <span class="layer-chip">… (one per resource)</span>
+          </div>
+        </div>
+        <div class="layer-arrow">↓ depends on</div>
+        <div class="layer">
+          <span class="layer-label">Controllers</span>
+          <div class="layer-content">
+            <span class="layer-chip">parse request</span>
+            <span class="layer-chip">call service</span>
+            <span class="layer-chip">format response</span>
+          </div>
+        </div>
+        <div class="layer-arrow">↓ depends on</div>
+        <div class="layer">
+          <span class="layer-label">Services</span>
+          <div class="layer-content">
+            <span class="layer-chip">leaveRequest.ts</span>
+            <span class="layer-chip">leaveBalance.ts</span>
+            <span class="layer-chip">audit.ts</span>
+            <span class="layer-chip">notification.ts</span>
+            <span class="layer-chip">…</span>
+          </div>
+        </div>
+        <div class="layer-arrow">↓ depends on</div>
+        <div class="layer">
+          <span class="layer-label">Data / Utils</span>
+          <div class="layer-content">
+            <span class="layer-chip">Prisma 7 (ORM)</span>
+            <span class="layer-chip">workingDays.ts</span>
+            <span class="layer-chip">storage.ts</span>
+            <span class="layer-chip">email.ts</span>
+            <span class="layer-chip">pdf.ts / csv.ts</span>
+          </div>
+        </div>
+      </div>
+      <p class="flow-note" style="margin-top:16px">Dependency arrows are strictly top-down. Services may call sibling services (e.g. <code>leaveRequest</code> calls <code>audit</code> and <code>notification</code>), but never routes or controllers.</p>
+    </div>
+
+    <h3>Frontend feature slices</h3>
+    <div class="diagram">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="layer-chip">features/auth/</span>
+        <span class="layer-chip">features/leaves/</span>
+        <span class="layer-chip">features/employees/</span>
+        <span class="layer-chip">features/departments/</span>
+        <span class="layer-chip">features/calendar/</span>
+        <span class="layer-chip">features/reports/</span>
+        <span class="layer-chip">features/audit/</span>
+        <span class="layer-chip">features/profile/</span>
+      </div>
+      <p style="font-size:0.88rem;color:var(--muted)">Each slice owns its own components, hooks, and query logic. All slices share <code>lib/apiClient</code>, <code>lib/queryClient</code>, and <code>components/</code>. No slice imports from another slice — shared logic goes to <code>lib/</code> instead.</p>
+    </div>
+  </section>
+
+
+  <!-- ── Invariants ── -->
+  <section id="invariants">
+    <h2>Architecture Decisions — All 16</h2>
+    <p class="muted" style="margin-bottom:20px">The durable contract between independent builders. Breaking any of these creates integration risk.</p>
+    <div class="ad-grid">
+
+      <div class="ad">
+        <div class="ad-id">AD-1</div>
+        <div class="ad-title">RBAC enforced server-side on every protected route</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>All API routes, NFR-SEC-1</span></span>
+        </div>
+        <div class="ad-rule">Every protected route passes through <code>middleware/auth</code> (JWT validation) then <code>middleware/rbac</code> (role check). Frontend guards are UI convenience only.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-2</div>
+        <div class="ad-title"><code>leave_balances</code> table is the authoritative balance store</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-BAL, FR-REQ, FR-APPR</span></span>
+        </div>
+        <div class="ad-rule">All balance reads and writes go through <code>services/leaveBalance</code>. No code may calculate a balance by summing approved <code>leave_requests</code>.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-3</div>
+        <div class="ad-title">All list endpoints are server-side paginated</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-SRCH, FR-REQ, FR-APPR, FR-RPT, FR-AUDIT, FR-EMP</span></span>
+        </div>
+        <div class="ad-rule">Every list endpoint accepts <code>?page=&amp;limit=</code> (default 20) and returns <code>{ data, meta: { page, limit, total } }</code>. No unbounded array responses.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-4</div>
+        <div class="ad-title">Balance mutation, status change, overlap check, and cancel restore are all transaction-scoped</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-BAL-4, FR-APPR-4/5, FR-REQ-2/4</span></span>
+        </div>
+        <div class="ad-rule"><code>approve()</code>, <code>reject()</code>, and <code>cancel()</code> use <code>prisma.$transaction</code>. Overlap SELECT in <code>submit()</code> runs inside the same transaction (prevents TOCTOU). <code>cancel()</code> restores the stored <code>duration_days</code> — never recalculates.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-5</div>
+        <div class="ad-title">Access token in React memory only; refresh token in httpOnly cookie</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-AUTH-4, NFR-SEC-3</span></span>
+        </div>
+        <div class="ad-rule">Access token lives in <code>AuthContext</code> state — never <code>localStorage</code> or a JS-readable cookie. Refresh token is set <code>HttpOnly; SameSite=Strict</code> by the API.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-6</div>
+        <div class="ad-title">File I/O goes through a storage abstraction</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-REQ-5, FR-APPR-6, NFR-SEC-2</span></span>
+        </div>
+        <div class="ad-rule"><code>utils/storage.ts</code> is the only file that touches disk or the R2 SDK. Exposes <code>save(buffer, filename)</code> and <code>getSignedUrl(filename)</code>. Active backend selected by <code>STORAGE_PROVIDER</code> env var (<code>local</code> | <code>r2</code>).</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-7</div>
+        <div class="ad-title">Email notifications are fire-and-forget</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-NOTIF-1, FR-NOTIF-2, FR-NOTIF-3</span></span>
+        </div>
+        <div class="ad-rule">Services call <code>utils/email.send()</code> after the DB transaction commits. <code>email.send()</code> catches its own errors and never re-throws. Email failure does not affect the HTTP response.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-8</div>
+        <div class="ad-title">Audit log is append-only</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-AUDIT-3</span></span>
+        </div>
+        <div class="ad-rule"><code>services/audit</code> exposes only <code>append(entry)</code>. No update or delete method exists. Application code may never issue <code>UPDATE</code> or <code>DELETE</code> on <code>audit_logs</code>.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-9</div>
+        <div class="ad-title">Working-day calculation is server-side</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-REQ-2, FR-HOL-2</span></span>
+        </div>
+        <div class="ad-rule"><code>utils/workingDays.ts</code> is the single implementation. The frontend renders the server-returned <code>duration_days</code> — it does not recalculate.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-10</div>
+        <div class="ad-title">Unified API response envelope</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>All API routes</span></span>
+        </div>
+        <div class="ad-rule">Every response body is <code>{ success: boolean, data?: T, error?: string, meta?: { page, limit, total } }</code>. HTTP status codes carry semantics. No custom numeric error codes.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-11 <span style="font-weight:400;color:var(--muted)">[ASSUMPTION: monorepo]</span></div>
+        <div class="ad-title">Frontend and backend are sibling directories; no shared runtime module</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>All, NFR-DEPL-1</span></span>
+        </div>
+        <div class="ad-rule"><code>frontend/</code> and <code>backend/</code> are top-level siblings. Nothing in <code>frontend/</code> imports a path from <code>backend/</code> at runtime.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-12</div>
+        <div class="ad-title">Annual balance reset is a scheduled job, not an HTTP endpoint</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-BAL-3</span></span>
+        </div>
+        <div class="ad-rule">Implemented as a <code>node-cron</code> job or DB-level scheduled function. No <code>POST /admin/reset-balances</code> route.</div>
+      </div>
+
+      <div class="ad ad-adopted">
+        <div class="ad-id">AD-13 · ADOPTED</div>
+        <div class="ad-title">PDF export uses <code>@cantoo/pdf-lib</code>; Puppeteer excluded from v1</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-RPT-4</span></span>
+        </div>
+        <div class="ad-rule">All PDF generation through <code>utils/pdf.ts</code> using <code>@cantoo/pdf-lib</code> (active fork of the abandoned <code>pdf-lib</code>). Avoids a 300 MB headless browser dependency.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-14</div>
+        <div class="ad-title">Notification recipient contract is fixed per event type</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-NOTIF-1, FR-NOTIF-2, FR-NOTIF-3</span></span>
+        </div>
+        <div class="ad-rule">SUBMITTED → reporting manager. APPROVED → submitting employee. REJECTED → submitting employee. ADMIN_CANCELLED → submitting employee.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-15</div>
+        <div class="ad-title"><code>leave_balances</code> rows provisioned eagerly, never lazily</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-BAL, AD-2</span></span>
+        </div>
+        <div class="ad-rule"><code>services/user.create()</code> inserts one balance row per active leave type. New leave types trigger a migration/admin step to backfill existing users. Lazy on-read creation is prohibited.</div>
+      </div>
+
+      <div class="ad">
+        <div class="ad-id">AD-16</div>
+        <div class="ad-title">Every notifiable event writes an in-app row AND sends email</div>
+        <div class="ad-meta">
+          <span class="ad-tag">Binds: <span>FR-NOTIF-1 – FR-NOTIF-4, AD-7</span></span>
+        </div>
+        <div class="ad-rule"><code>services/notification.trigger(event, userId)</code> always writes a <code>notifications</code> row and always calls <code>utils/email.send()</code>. Neither path is optional. Email failure (AD-7) does not prevent the DB row.</div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ── Data Model ── -->
+  <section id="entities">
+    <h2>Core Data Model</h2>
+    <p>All IDs are UUIDs. All timestamps are ISO 8601 UTC. All dates are <code>YYYY-MM-DD</code>.</p>
+    <div class="entity-grid">
+      <div class="entity-box">
+        <div class="entity-name">users</div>
+        <div class="entity-fields">
+          <div class="entity-field"><span class="pk">id</span><span>uuid PK</span></div>
+          <div class="entity-field"><span>email</span><span>string</span></div>
+          <div class="entity-field"><span>password_hash</span><span>string</span></div>
+          <div class="entity-field"><span>role</span><span>ADMIN|MGR|EMP</span></div>
+          <div class="entity-field"><span class="fk">department_id</span><span>FK</span></div>
+          <div class="entity-field"><span class="fk">manager_id</span><span>FK(self)</span></div>
+        </div>
+      </div>
+      <div class="entity-box">
+        <div class="entity-name">departments</div>
+        <div class="entity-fields">
+          <div class="entity-field"><span class="pk">id</span><span>uuid PK</span></div>
+          <div class="entity-field"><span>name</span><span>string</span></div>
+          <div class="entity-field"><span class="fk">manager_id</span><span>FK → users</span></div>
+        </div>
+      </div>
+      <div class="entity-box">
+        <div class="entity-name">leave_types</div>
+        <div class="entity-fields">
+          <div class="entity-field"><span class="pk">id</span><span>uuid PK</span></div>
+          <div class="entity-field"><span>name</span><span>string</span></div>
+          <div class="entity-field"><span>default_quota</span><span>int (days)</span></div>
+          <div class="entity-field"><span>document_required</span><span>bool</span></div>
+          <div class="entity-field"><span>active</span><span>bool</span></div>
+        </div>
+      </div>
+      <div class="entity-box">
+        <div class="entity-name">leave_balances</div>
+        <div class="entity-fields">
+          <div class="entity-field"><span class="pk">id</span><span>uuid PK</span></div>
+          <div class="entity-field"><span class="fk">user_id</span><span>FK → users</span></div>
+          <div class="entity-field"><span class="fk">leave_type_id</span><span>FK</span></div>
+          <div class="entity-field"><span>balance</span><span>int (days)</span></div>
+        </div>
+      </div>
+      <div class="entity-box">
+        <div class="entity-name">leave_requests</div>
+        <div class="entity-fields">
+          <div class="entity-field"><span class="pk">id</span><span>uuid PK</span></div>
+          <div class="entity-field"><span class="fk">user_id</span><span>FK → users</span></div>
+          <div class="entity-field"><span class="fk">leave_type_id</span><span>FK</span></div>
+          <div class="entity-field"><span>start_date</span><span>date</span></div>
+          <div class="entity-field"><span>end_date</span><span>date</span></div>
+          <div class="entity-field"><span>duration_days</span><span>int</span></div>
+          <div class="entity-field"><span>status</span><span>PENDING|APPR|REJ|CANC</span></div>
+          <div class="entity-field"><span>document_path</span><span>string?</span></div>
+        </div>
+      </div>
+      <div class="entity-box">
+        <div class="entity-name">audit_logs</div>
+        <div class="entity-fields">
+          <div class="entity-field"><span class="pk">id</span><span>uuid PK</span></div>
+          <div class="entity-field"><span class="fk">leave_request_id</span><span>FK</span></div>
+          <div class="entity-field"><span class="fk">actor_id</span><span>FK → users</span></div>
+          <div class="entity-field"><span>action</span><span>enum</span></div>
+          <div class="entity-field"><span>created_at</span><span>timestamp</span></div>
+          <div class="entity-field"><span>comment</span><span>string?</span></div>
+        </div>
+      </div>
+      <div class="entity-box">
+        <div class="entity-name">company_holidays</div>
+        <div class="entity-fields">
+          <div class="entity-field"><span class="pk">id</span><span>uuid PK</span></div>
+          <div class="entity-field"><span>date</span><span>date</span></div>
+          <div class="entity-field"><span>name</span><span>string</span></div>
+        </div>
+      </div>
+      <div class="entity-box">
+        <div class="entity-name">notifications</div>
+        <div class="entity-fields">
+          <div class="entity-field"><span class="pk">id</span><span>uuid PK</span></div>
+          <div class="entity-field"><span class="fk">user_id</span><span>FK → users</span></div>
+          <div class="entity-field"><span>message</span><span>string</span></div>
+          <div class="entity-field"><span>read</span><span>bool</span></div>
+          <div class="entity-field"><span>created_at</span><span>timestamp</span></div>
+        </div>
+      </div>
+      <div class="entity-box">
+        <div class="entity-name">refresh_tokens</div>
+        <div class="entity-fields">
+          <div class="entity-field"><span class="pk">id</span><span>uuid PK</span></div>
+          <div class="entity-field"><span class="fk">user_id</span><span>FK → users</span></div>
+          <div class="entity-field"><span>token_hash</span><span>string</span></div>
+          <div class="entity-field"><span>expires_at</span><span>timestamp</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── Security ── -->
+  <section id="security">
+    <h2>Security Model</h2>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">🔐</span>
+      <div>
+        <strong>RBAC is always server-side (AD-1).</strong> Every protected API route validates the JWT and asserts the required role. The frontend role-checks are UI sugar — bypassing them by calling the API directly must still fail.
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠️</span>
+      <div>
+        <strong>Token storage (AD-5).</strong> Access tokens live in <code>AuthContext</code> React state only. Refresh tokens are set by the API as <code>HttpOnly; SameSite=Strict</code> cookies. XSS cannot reach either.
+      </div>
+    </div>
+
+    <h3>RBAC matrix</h3>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Capability</th>
+          <th>Employee</th>
+          <th>Manager</th>
+          <th>Admin</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Submit / cancel own leave</td><td><span class="pill pill-green">✓</span></td><td><span class="pill pill-green">✓</span></td><td><span class="pill pill-green">✓</span></td></tr>
+        <tr><td>View own leave history &amp; balances</td><td><span class="pill pill-green">✓</span></td><td><span class="pill pill-green">✓</span></td><td><span class="pill pill-green">✓</span></td></tr>
+        <tr><td>Approve / reject team leaves</td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-green">✓ (own team)</span></td><td><span class="pill pill-green">✓ (all)</span></td></tr>
+        <tr><td>View department calendar</td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-green">✓</span></td><td><span class="pill pill-green">✓</span></td></tr>
+        <tr><td>Generate team reports</td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-green">✓ (own team)</span></td><td><span class="pill pill-green">✓ (all)</span></td></tr>
+        <tr><td>Manage employees / departments</td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-green">✓</span></td></tr>
+        <tr><td>Configure leave types &amp; holidays</td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-green">✓</span></td></tr>
+        <tr><td>View audit log</td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-green">✓</span></td></tr>
+        <tr><td>Override leave balances</td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-red">✗</span></td><td><span class="pill pill-green">✓</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>File upload constraints (NFR-SEC-2)</h3>
+    <p>Enforced by <code>middleware/upload.ts</code> (Multer): allowed MIME types <code>application/pdf</code>, <code>image/jpeg</code>, <code>image/png</code>; maximum 5 MB. Rejected uploads return 400 before reaching the controller.</p>
+  </section>
+
+
+  <!-- ── Leave lifecycle ── -->
+  <section id="lifecycle">
+    <h2>Leave Request Lifecycle</h2>
+    <p>The leave lifecycle is the core of the system. All state transitions are atomic (AD-4) and audited (AD-8).</p>
+
+    <div style="overflow-x:auto;margin-top:16px">
+    <table>
+      <thead>
+        <tr><th>Status</th><th>Transition</th><th>Actor</th><th>Balance effect</th><th>Audit entry</th><th>Notifications (AD-14)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>—</td>
+          <td><strong>Submit</strong></td>
+          <td>Employee</td>
+          <td>None (warning if insufficient)</td>
+          <td>SUBMITTED</td>
+          <td>Reporting manager</td>
+        </tr>
+        <tr>
+          <td>Pending</td>
+          <td><strong>Approve</strong></td>
+          <td>Manager / Admin</td>
+          <td>Deduct <code>duration_days</code></td>
+          <td>APPROVED</td>
+          <td>Submitting employee</td>
+        </tr>
+        <tr>
+          <td>Pending</td>
+          <td><strong>Reject</strong></td>
+          <td>Manager / Admin</td>
+          <td>None</td>
+          <td>REJECTED</td>
+          <td>Submitting employee</td>
+        </tr>
+        <tr>
+          <td>Pending</td>
+          <td><strong>Cancel (self)</strong></td>
+          <td>Employee</td>
+          <td>None</td>
+          <td>CANCELLED</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Approved</td>
+          <td><strong>Cancel (admin)</strong></td>
+          <td>Admin</td>
+          <td>Restore stored <code>duration_days</code></td>
+          <td>ADMIN_CANCELLED</td>
+          <td>Submitting employee</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>Submit flow — transaction boundary</h3>
+    <div class="diagram">
+      <div class="timeline">
+        <div class="tl-step">
+          <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Validate request body</div>
+            <div class="tl-desc">Controller validates dates, leave type exists, document present if required (FR-REQ-5).</div>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Calculate duration (AD-9)</div>
+            <div class="tl-desc"><code>utils/workingDays.ts</code> computes working days (weekdays minus company holidays).</div>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Check balance (warn, don't block)</div>
+            <div class="tl-desc">Read from <code>leave_balances</code> (AD-2). Return warning flag if insufficient; do not reject (FR-REQ-3).</div>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-left"><div class="tl-dot" style="background:var(--orange)"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">prisma.$transaction begins (AD-4)</div>
+            <div class="tl-desc">Overlap SELECT + INSERT run atomically. TOCTOU race prevented.</div>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Overlap check inside transaction</div>
+            <div class="tl-desc">SELECT approved leaves for team on requested dates. Add warning flag if overlap found (FR-REQ-4). Submission is never blocked.</div>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">INSERT leave_request + audit entry</div>
+            <div class="tl-desc">Status = PENDING. <code>duration_days</code> stored. Audit entry written.</div>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-left"><div class="tl-dot" style="background:var(--orange)"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Transaction commits</div>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-left"><div class="tl-dot" style="background:var(--teal)"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">HTTP 201 returned to client</div>
+          </div>
+        </div>
+        <div class="tl-step">
+          <div class="tl-left"><div class="tl-dot" style="background:var(--muted)"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Notification triggered — fire-and-forget (AD-7, AD-16)</div>
+            <div class="tl-desc">Write <code>notifications</code> row + call <code>email.send()</code>. Recipient: reporting manager (AD-14). Failure is logged silently.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── Deployment ── -->
+  <section id="deployment">
+    <h2>Deployment Topology</h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card">
+        <div class="card-label">Development</div>
+        <p style="margin-top:8px;font-size:0.9rem">Docker Compose spins up PostgreSQL 16 + pgAdmin. Both dev servers run locally. <code>STORAGE_PROVIDER=local</code>, <code>EMAIL_PROVIDER=ethereal</code>.</p>
+      </div>
+      <div class="card">
+        <div class="card-label">Production</div>
+        <p style="margin-top:8px;font-size:0.9rem">Frontend → Vercel/Netlify (static SPA). Backend → Railway/Render. DB → Supabase/Railway. Files → Cloudflare R2. Email → Resend.</p>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center;font-size:0.87rem">
+        <div class="flow-box" style="border-color:var(--accent)">Browser (React SPA)</div>
+        <span class="flow-arrow">→ HTTPS REST</span>
+        <div class="flow-box" style="border-color:var(--accent)">API Server (Express 5)</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">PostgreSQL 16</div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center;font-size:0.87rem;margin-top:12px">
+        <div style="width:200px"></div>
+        <span class="flow-arrow" style="padding:0 58px">↓</span>
+        <span class="flow-arrow">↓</span>
+        <div style="width:120px"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center;font-size:0.87rem;margin-top:4px">
+        <div style="width:200px"></div>
+        <div class="flow-box">Cloudflare R2</div>
+        <div class="flow-box">Resend (email)</div>
+      </div>
+      <p class="flow-note" style="margin-top:16px;text-align:center">Dashed arrows = fire-and-forget (AD-7). All API ↔ browser traffic uses JWT Bearer + httpOnly refresh cookie (AD-5).</p>
+    </div>
+
+    <h3>Key operational notes</h3>
+    <ul style="margin-left:20px;font-size:0.9rem;color:var(--muted);line-height:1.8">
+      <li>Schema managed exclusively by Prisma migrations — <code>prisma migrate deploy</code> on each release (NFR-DEPL-2).</li>
+      <li>Seed script (<code>prisma/seed.ts</code>) is idempotent — safe to re-run; creates demo accounts if missing.</li>
+      <li>Balance reset job (<code>jobs/resetBalances.ts</code>) runs on Jan 1 via <code>node-cron</code>. No HTTP exposure (AD-12).</li>
+      <li>Prisma 7 requires explicit <code>prisma.config.ts</code> for datasource URL + driver adapter — env vars are not auto-loaded.</li>
+      <li>All secrets via environment variables; <code>.env.example</code> documents required keys (NFR-SEC-4).</li>
+    </ul>
+  </section>
+
+
+  <!-- ── Stack ── -->
+  <section id="stack">
+    <h2>Verified Stack</h2>
+    <p class="muted" style="margin-bottom:16px">Web-verified 2026-06-29. Breaking-change notes included for major version bumps.</p>
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr><th>Layer</th><th>Name</th><th>Version</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Runtime</td><td>Node.js</td><td>24 LTS</td><td>20 reached EOL Apr 2026</td></tr>
+        <tr><td>Language</td><td>TypeScript</td><td>6.x</td><td>Current stable; TS 7 (Go rewrite) in RC</td></tr>
+        <tr><td>API framework</td><td>Express</td><td>5.x</td><td>4.x in Maintenance; breaking: wildcard syntax, ESM shifts</td></tr>
+        <tr><td>ORM</td><td>Prisma</td><td>7.x</td><td><span class="pill pill-orange">Breaking rewrite</span> — <code>prisma.config.ts</code> replaces datasource in schema; driver adapters required; ESM-only</td></tr>
+        <tr><td>Database</td><td>PostgreSQL</td><td>16</td><td>Still supported; acceptable for new projects</td></tr>
+        <tr><td>UI framework</td><td>React</td><td>18.x</td><td>Current production LTS</td></tr>
+        <tr><td>Styling</td><td>TailwindCSS</td><td>4.x</td><td>CSS-first config (<code>@theme</code> in CSS); no <code>tailwind.config.js</code></td></tr>
+        <tr><td>Server state</td><td>TanStack Query</td><td>5.x</td><td>Current</td></tr>
+        <tr><td>Routing</td><td>React Router</td><td>7.x</td><td>v6 EOL; v8 requires React 19</td></tr>
+        <tr><td>File upload</td><td>Multer</td><td>2.x</td><td></td></tr>
+        <tr><td>Auth</td><td>jsonwebtoken</td><td>9.x</td><td>Current</td></tr>
+        <tr><td>Auth</td><td>bcryptjs</td><td>3.x</td><td></td></tr>
+        <tr><td>Email</td><td>Nodemailer</td><td>9.x</td><td><code>disableFileAccess</code>/<code>disableUrlAccess</code> default true; NTLM removed</td></tr>
+        <tr><td>Export</td><td>csv-stringify</td><td>6.x</td><td>Current</td></tr>
+        <tr><td>Export</td><td>@cantoo/pdf-lib</td><td>2.x</td><td>Active fork of abandoned <code>pdf-lib</code> (AD-13)</td></tr>
+        <tr><td>Scheduler</td><td>node-cron</td><td>4.x</td><td><code>running</code> → <code>isActive</code>; no EventEmitter</td></tr>
+        <tr><td>Storage</td><td>@aws-sdk/client-s3</td><td>3.x</td><td>R2-compatible; current</td></tr>
+        <tr><td>ORM adapter</td><td>@prisma/adapter-pg</td><td>7.x</td><td>Required by Prisma 7 for PostgreSQL</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+
+  <!-- ── Deferred ── -->
+  <section id="deferred">
+    <h2>Deferred Decisions</h2>
+    <p class="muted" style="margin-bottom:16px">Intentionally out of scope for this spine. Each has a clear condition under which to revisit.</p>
+    <div class="deferred-list">
+      <div class="deferred-item"><strong>Production hosting provider</strong> — Vercel vs Netlify vs Railway vs Render vs Supabase. Pick at deployment time; the spine is provider-agnostic.</div>
+      <div class="deferred-item"><strong>React form library</strong> — React Hook Form vs plain controlled components. Per-feature choice; no cross-feature consistency requirement.</div>
+      <div class="deferred-item"><strong>In-app notification delivery</strong> — polling interval or WebSocket upgrade. Not load-bearing for v1 leave lifecycle; decide when building the notification badge.</div>
+      <div class="deferred-item"><strong>Shared type package</strong> — formal <code>shared/</code> npm workspace vs manually sync'd <code>lib/types.ts</code>. Upgrade if type drift becomes a problem.</div>
+      <div class="deferred-item"><strong>Rate limiting on auth endpoints</strong> — brute-force protection on <code>POST /auth/login</code>. Add before any public non-portfolio exposure.</div>
+      <div class="deferred-item"><strong>Leave carry-forward</strong> — explicitly out of scope v1 (PRD § 7). v2 decision.</div>
+    </div>
+  </section>
+
+
+  <section style="margin-top:56px;padding-top:32px;border-top:1px solid var(--border)">
+    <p class="muted" style="text-align:center;font-size:0.82rem">
+      Architecture Spine: <code>_bmad-output/planning-artifacts/architecture/architecture-employee-leave-management-system-2026-06-29/ARCHITECTURE-SPINE.md</code><br>
+      PRD: <code>_bmad-output/planning-artifacts/prds/prd-employee-leave-management-system-2026-06-29/prd.md</code>
+    </p>
+  </section>
+
+</div>
+</body>
+</html>
