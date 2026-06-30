@@ -12,7 +12,11 @@ export const authenticate: RequestHandler = (req, res, next) => {
   }
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { userId: string; role: string }
+    const payload = jwt.verify(token, JWT_SECRET) as { userId?: unknown; role?: unknown }
+    if (typeof payload.userId !== 'string' || typeof payload.role !== 'string') {
+      res.status(401).json({ success: false, error: 'Unauthorized' })
+      return
+    }
     req.user = { userId: payload.userId, role: payload.role }
     next()
   } catch {

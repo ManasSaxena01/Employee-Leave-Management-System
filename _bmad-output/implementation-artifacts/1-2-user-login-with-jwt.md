@@ -4,7 +4,7 @@ story_key: "1-2-user-login-with-jwt"
 epic: 1
 story: 2
 title: "User Login with JWT"
-status: "review"
+status: "done"
 created: "2026-06-30"
 epic_title: "Foundation, Authentication & Project Scaffold"
 baseline_commit: "NO_VCS"
@@ -12,7 +12,7 @@ baseline_commit: "NO_VCS"
 
 # Story 1.2: User Login with JWT
 
-## Status: review
+## Status: done
 
 ## Story
 
@@ -755,3 +755,4 @@ No issues encountered. All files compiled cleanly (backend `tsc --noEmit`, front
 | Date | Change |
 |------|--------|
 | 2026-06-30 | Story 1.2 implemented: JWT login endpoint, auth/rbac middleware, login UI, apiClient token injection. 6 new files, 6 modified. 15 tests pass. |
+| 2026-06-30 | Code review fix pass: dummy-hash timing oracle closed (AC3), login() refresh-token write wrapped in a transaction, JWT payload runtime-validated in `authenticate`, expiry-constant duplication removed, `logout()`/`refreshAccessToken()` bcrypt-scan loop deduplicated, `RequireRole` isLoading guard added. 24/24 backend tests pass. Marked done. |

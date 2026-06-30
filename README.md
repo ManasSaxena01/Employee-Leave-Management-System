@@ -54,13 +54,21 @@ Frontend dev server runs on `http://localhost:5173`.
 
 ## Demo Seed Credentials
 
-> Seed data is implemented in Story 1.4. Credentials will be added here once available.
+Run the seed to populate demo data:
 
-| Role     | Email | Password |
-|----------|-------|----------|
-| Admin    | TBD   | TBD      |
-| Manager  | TBD   | TBD      |
-| Employee | TBD   | TBD      |
+```bash
+cd backend
+npx prisma db seed
+# or: npm run seed
+```
+
+| Role     | Email                | Password     |
+|----------|----------------------|--------------|
+| Admin    | admin@demo.com       | Password123! |
+| Manager  | manager@demo.com     | Password123! |
+| Employee | employee@demo.com    | Password123! |
+
+Additional seeded accounts: `diana@demo.com`, `eve@demo.com`, `frank@demo.com` (all same password).
 
 ## Project Structure
 

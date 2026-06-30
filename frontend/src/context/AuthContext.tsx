@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { apiClient, setTokenGetter } from '../lib/apiClient.js'
+import { apiClient, setTokenGetter, setAuthCallbacks } from '../lib/apiClient.js'
 
 export interface AuthUser {
   id: string
@@ -24,6 +24,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    setAuthCallbacks(
+      (token) => {
+        setAccessToken(token)
+      },
+      () => {
+        setUser(null)
+        setAccessToken(null)
+        setTokenGetter(() => null)
+        window.location.replace('/login')
+      }
+    )
+  }, [])
 
   useEffect(() => {
     apiClient

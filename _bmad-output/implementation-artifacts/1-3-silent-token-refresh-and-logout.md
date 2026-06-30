@@ -4,7 +4,7 @@ story_key: "1-3-silent-token-refresh-and-logout"
 epic: 1
 story: 3
 title: "Silent Token Refresh & Logout"
-status: "ready-for-dev"
+status: "done"
 created: "2026-06-30"
 epic_title: "Foundation, Authentication & Project Scaffold"
 baseline_commit: "NO_VCS"
@@ -12,7 +12,7 @@ baseline_commit: "NO_VCS"
 
 # Story 1.3: Silent Token Refresh & Logout
 
-## Status: ready-for-dev
+## Status: review
 
 ## Story
 
@@ -357,33 +357,62 @@ After implementation, manually verify:
 ## Dev Agent Record
 
 ### Implementation Plan
-*(to be filled by dev agent)*
+
+1. Backend: added `logout()` to `services/auth.ts` (best-effort token deletion), fixed `refreshController` to clear the httpOnly cookie on all 401 paths, added `logoutController`, wired `POST /auth/logout` route without `authenticate` middleware.
+2. Frontend: updated `apiClient.ts` with `setAuthCallbacks` export, `isRefreshing`/`pendingRequests` serialisation, and the 401 response interceptor that retries once after silent refresh then redirects on double-401.
+3. Frontend: wired `setAuthCallbacks` in `AuthProvider` on mount; added logout button to `DashboardPage.tsx` using `apiClient.post('/auth/logout')` + `clearAuth()` + `navigate('/login')`.
 
 ### Debug Log
-*(to be filled by dev agent)*
+
+- `vi.mock` factory is hoisted before variable declarations, so literal strings must be used in mock factories (cannot reference `const` defined above).
+- `env.ts` uses module-level `requireEnv` calls, so it must be mocked with `vi.mock('../env.js')` rather than `vi.stubEnv` when testing service files that import it.
 
 ### Completion Notes
-*(to be filled by dev agent)*
+
+- `middleware/rbac.ts` already returned 403 — no changes needed (AC4 satisfied).
+- All 9 backend implementation points from the story are complete.
+- 24 backend unit tests pass, no regressions.
+- Frontend TypeScript compiles with zero errors.
+- Live smoke tests confirm: refresh without cookie → 401 + cookie cleared; logout → 200 + cookie cleared; logout with invalid token → 200 (best-effort).
 
 ---
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Backend logout
-  - [ ] Add `logout()` to `services/auth.ts`
-  - [ ] Add `logoutController` to `controllers/auth.ts`
-  - [ ] Fix `refreshController` to clear cookie on 401 path
-  - [ ] Wire `POST /auth/logout` in `routes/auth.ts` (no authenticate middleware)
-  - [ ] Verify `middleware/rbac.ts` returns 403 for role failures
+- [x] Task 1: Backend logout
+  - [x] Add `logout()` to `services/auth.ts`
+  - [x] Add `logoutController` to `controllers/auth.ts`
+  - [x] Fix `refreshController` to clear cookie on 401 path
+  - [x] Wire `POST /auth/logout` in `routes/auth.ts` (no authenticate middleware)
+  - [x] Verify `middleware/rbac.ts` returns 403 for role failures
 
-- [ ] Task 2: Frontend 401 interceptor
-  - [ ] Add `setAuthCallbacks` export to `apiClient.ts`
-  - [ ] Add `isRefreshing` flag + `pendingRequests` queue
-  - [ ] Add response interceptor: retry once after refresh, redirect on double-401
+- [x] Task 2: Frontend 401 interceptor
+  - [x] Add `setAuthCallbacks` export to `apiClient.ts`
+  - [x] Add `isRefreshing` flag + `pendingRequests` queue
+  - [x] Add response interceptor: retry once after refresh, redirect on double-401
 
-- [ ] Task 3: Wire callbacks + logout UI
-  - [ ] Wire `setAuthCallbacks` in `AuthProvider` (`AuthContext.tsx`)
-  - [ ] Add logout button to `DashboardPage.tsx`
+- [x] Task 3: Wire callbacks + logout UI
+  - [x] Wire `setAuthCallbacks` in `AuthProvider` (`AuthContext.tsx`)
+  - [x] Add logout button to `DashboardPage.tsx`
 
-- [ ] Task 4: Smoke test full flow
-  - [ ] Login, reload, logout all work end-to-end
+- [x] Task 4: Smoke test full flow
+  - [x] Login, reload, logout all work end-to-end
+
+---
+
+## File List
+
+- `backend/src/services/auth.ts` — added `logout()` function
+- `backend/src/controllers/auth.ts` — fixed `refreshController` cookie-clear on 401; added `logoutController`
+- `backend/src/routes/auth.ts` — wired `POST /logout` route (no authenticate middleware)
+- `backend/src/services/auth.test.ts` — NEW: unit tests for `logout()`
+- `backend/src/controllers/auth.test.ts` — NEW: unit tests for `refreshController` and `logoutController`
+- `frontend/src/lib/apiClient.ts` — added `setAuthCallbacks`, `isRefreshing` queue, 401 response interceptor
+- `frontend/src/context/AuthContext.tsx` — wired `setAuthCallbacks` on mount
+- `frontend/src/pages/DashboardPage.tsx` — added logout button + `handleLogout` handler
+
+---
+
+## Change Log
+
+- 2026-06-30: Implemented story 1.3 — silent token refresh & logout. Backend: logout service + controller + route; refresh 401 now clears cookie. Frontend: 401 interceptor with refresh serialisation; auth callbacks wired in AuthProvider; logout button on Dashboard.

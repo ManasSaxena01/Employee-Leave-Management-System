@@ -20,7 +20,8 @@ function RequireAuth() {
 }
 
 function RequireRole({ roles }: { roles: string[] }) {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
+  if (isLoading) return null
   return user && roles.includes(user.role) ? <Outlet /> : <Navigate to="/dashboard" replace />
 }
 
