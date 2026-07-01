@@ -4,6 +4,9 @@ import { existsSync } from 'fs'
 import { authRouter } from './auth.js'
 import { departmentsRouter } from './departments.js'
 import { leaveTypesRouter } from './leaveTypes.js'
+import { companyHolidaysRouter } from './companyHolidays.js'
+import { employeesRouter } from './employees.js'
+import { leaveRequestsRouter } from './leaveRequests.js'
 import { authenticate } from '../middleware/auth.js'
 
 export const router = Router()
@@ -11,6 +14,9 @@ export const router = Router()
 router.use('/auth', authRouter)
 router.use('/departments', departmentsRouter)
 router.use('/leave-types', leaveTypesRouter)
+router.use('/company-holidays', companyHolidaysRouter)
+router.use('/employees', employeesRouter)
+router.use('/leave-requests', leaveRequestsRouter)
 
 router.get('/files/:filename', authenticate, (req, res) => {
   const filename = path.basename(req.params['filename'] as string)

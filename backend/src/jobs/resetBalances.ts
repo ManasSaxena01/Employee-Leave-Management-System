@@ -1,11 +1,12 @@
 import { createTask } from 'node-cron'
+import { resetAllBalances } from '../services/leaveBalance.js'
 
-// node-cron v4: use createTask (does not auto-start); call .start() in server.ts
-// Full implementation in Story 3.3
 export const resetBalancesJob = createTask(
-  '0 0 1 1 *',  // January 1st, midnight in the configured timezone
+  '0 0 1 1 *',
   async () => {
-    console.log('[resetBalances] Annual balance reset triggered')
+    console.log('[resetBalances] Annual balance reset started')
+    await resetAllBalances()
+    console.log('[resetBalances] Annual balance reset completed')
   },
   { timezone: process.env['CRON_TIMEZONE'] ?? 'UTC' }
 )

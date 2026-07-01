@@ -39,19 +39,18 @@ export async function createLeaveType(input: {
     throw Object.assign(new Error('Leave type name already exists'), { status: 409 })
   }
 
-  let leaveType: LeaveTypeResult
   try {
-    leaveType = await prisma.leaveType.create({ data: input })
+    return await prisma.$transaction(async (tx) => {
+      const leaveType = await tx.leaveType.create({ data: input })
+      await provisionBalancesForNewLeaveType(leaveType.id, leaveType.defaultQuota, tx)
+      return leaveType
+    })
   } catch (err) {
     if (isUniqueConstraintError(err)) {
       throw Object.assign(new Error('Leave type name already exists'), { status: 409 })
     }
     throw err
   }
-
-  await provisionBalancesForNewLeaveType(leaveType.id, leaveType.defaultQuota)
-
-  return leaveType
 }
 
 export async function updateLeaveType(

@@ -1,3 +1,3 @@
 export const notification = {
-  trigger: async (): Promise<void> => {}
+  trigger: async (_event: string, _recipientId: string): Promise<void> => {},
 }

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('../prisma/client.js', () => ({
-  prisma: {
+vi.mock('../prisma/client.js', () => {
+  const prismaMock = {
+    $transaction: vi.fn().mockImplementation((cb: (tx: typeof prismaMock) => Promise<unknown>) => cb(prismaMock)),
     leaveType: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
@@ -9,8 +10,15 @@ vi.mock('../prisma/client.js', () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
-  },
-}))
+    leaveBalance: {
+      updateMany: vi.fn(),
+    },
+    user: {
+      findMany: vi.fn(),
+    },
+  }
+  return { prisma: prismaMock }
+})
 
 vi.mock('./leaveBalance.js', () => ({
   provisionBalancesForNewLeaveType: vi.fn(),
@@ -59,7 +67,7 @@ describe('createLeaveType()', () => {
     expect(prisma.leaveType.create).toHaveBeenCalledWith({
       data: { name: 'Bereavement', defaultQuota: 5, documentRequired: false },
     })
-    expect(provisionBalancesForNewLeaveType).toHaveBeenCalledWith('lt1', 5)
+    expect(provisionBalancesForNewLeaveType).toHaveBeenCalledWith('lt1', 5, expect.anything())
     expect(result.name).toBe('Bereavement')
   })
 

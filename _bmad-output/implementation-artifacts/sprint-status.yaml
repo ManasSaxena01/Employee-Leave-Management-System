@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-30
-last_updated: 2026-06-30  # updated: 2-2 review (dev complete)
+last_updated: 2026-07-01  # updated: 4-1 in-progress
 project: employee-leave-management-system
 project_key: NOKEY
 tracking_system: file-system
@@ -43,7 +43,7 @@ story_location: _bmad-output/implementation-artifacts
 
 development_status:
   # Epic 1: Foundation, Authentication & Project Scaffold
-  epic-1: in-progress
+  epic-1: done
   1-1-monorepo-scaffold-docker-and-database-schema: done
   1-2-user-login-with-jwt: done
   1-3-silent-token-refresh-and-logout: done
@@ -51,22 +51,22 @@ development_status:
   epic-1-retrospective: optional
 
   # Epic 2: Admin System Configuration — Departments, Leave Types & Holidays
-  epic-2: in-progress
+  epic-2: done
   2-1-department-management: done
-  2-2-leave-type-management: review
-  2-3-company-holiday-management-and-working-day-calculation: backlog
+  2-2-leave-type-management: done
+  2-3-company-holiday-management-and-working-day-calculation: done
   epic-2-retrospective: optional
 
   # Epic 3: Employee Management & Leave Balances
-  epic-3: backlog
-  3-1-employee-account-management: backlog
-  3-2-employee-list-search-filter-and-pagination: backlog
-  3-3-leave-balance-management-and-annual-reset: backlog
+  epic-3: done
+  3-1-employee-account-management: done
+  3-2-employee-list-search-filter-and-pagination: done
+  3-3-leave-balance-management-and-annual-reset: done
   epic-3-retrospective: optional
 
   # Epic 4: Leave Request Lifecycle
-  epic-4: backlog
-  4-1-leave-request-submission: backlog
+  epic-4: in-progress
+  4-1-leave-request-submission: in-progress
   4-2-employee-leave-history-and-cancel: backlog
   4-3-approval-queue-approve-reject-and-audit: backlog
   4-4-email-and-in-app-notifications: backlog
